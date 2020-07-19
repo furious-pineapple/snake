@@ -1,4 +1,4 @@
-type snakeTracker = {
+type snakePath = {
   isCurved: boolean;
   path: number[];
   direction: Directions;
@@ -18,16 +18,15 @@ const DirectionUnits = {
   [Directions.down]: 10,
 };
 
+const scale = 10;
+
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const defaultX = canvas.width / 2;
 const defaultY = canvas.height / 2;
 
-const scale = 10;
-
-const ctx = canvas!.getContext("2d");
-ctx!.lineWidth = scale;
-
-const startPosition: snakeTracker[] = [
+const defaultPoints = 1;
+const defaultDirection = Directions.right;
+const defaultPosition: snakePath[] = [
   {
     isCurved: false,
     path: [defaultX, defaultY],
@@ -45,9 +44,13 @@ const startPosition: snakeTracker[] = [
   },
 ];
 
+const ctx = canvas!.getContext("2d");
+ctx!.lineWidth = scale;
+
 const foodCoordinates: number[] = [];
-let direction = Directions.right;
-let points = 1;
+let direction = defaultDirection;
+let points = defaultPoints;
+let paths: snakePath[] = defaultPosition;
 
 const trackMovement = () => {
   // Setup events to track snake direction
@@ -73,7 +76,7 @@ const trackMovement = () => {
   });
 };
 
-const updatePath = (paths: snakeTracker[], direction: Directions) => {
+const updatePath = (direction: Directions) => {
   let isCurved = true;
   let path;
   const lastPath = paths[paths.length - 1];
@@ -93,8 +96,9 @@ const updatePath = (paths: snakeTracker[], direction: Directions) => {
     // Curves along the y axis
     path = [x, y + DirectionUnits[direction], x, y];
   }
+  // Check if food has been eaten
   if (path[0] === foodCoordinates[0] && path[1] === foodCoordinates[1]) {
-    makeNewFood();
+    makeFood();
     points++;
   }
   paths.push({
@@ -104,45 +108,54 @@ const updatePath = (paths: snakeTracker[], direction: Directions) => {
   });
 };
 
-const drawSnake = (ctx: CanvasRenderingContext2D, paths: snakeTracker[]) => {
-  ctx.beginPath();
-  paths.forEach(({ path, isCurved }) => {
-    if (isCurved) {
-      /* @ts-ignore */
-      ctx.quadraticCurveTo(...path);
-    }
-    /* @ts-ignore */
-    ctx.lineTo(...path);
-  });
-  ctx.stroke();
+const drawSnake = () => {
+  if (ctx) {
+    ctx.beginPath();
+    paths.forEach(({ path, isCurved }) => {
+      if (isCurved) {
+        // @ts-ignore
+        ctx.quadraticCurveTo(...path);
+      }
+      // @ts-ignore
+      ctx.lineTo(...path);
+    });
+    ctx.stroke();
+  }
 };
 
-const makeNewFood = () => {
+const drawFood = () => {
+  const [x, y] = foodCoordinates;
+  ctx!.strokeRect(x, y, scale / 6, scale / 6);
+};
+
+const makeFood = () => {
   // TODO: Improve so that it always scales with adjusting height and width
   foodCoordinates[0] = Math.floor((canvas.height / 10) * Math.random()) * 10;
   foodCoordinates[1] = Math.floor((canvas.width / 10) * Math.random()) * 10;
 };
 
-const drawFood = () => {
-  // @ts-ignore;
-  ctx.strokeRect(...foodCoordinates, scale / 6, scale / 6);
+const hasCrashed = () => {
+  // TODO: Add logic
+  return false;
 };
 
-function startGame() {
-  const paths: snakeTracker[] = startPosition;
-  trackMovement();
-  makeNewFood();
-  window.setInterval(() => {
-    /* @ts-ignore */
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (paths.length === points + 2) {
-      paths.shift();
-    }
-    updatePath(paths, direction);
-    /* @ts-ignore */
-    drawSnake(ctx, paths);
-    drawFood();
-  }, 100);
-}
+const resetGame = () => {
+  paths = defaultPosition;
+  points = defaultPoints;
+  direction = defaultDirection;
+};
 
-startGame();
+const startGame = () => {
+  ctx!.clearRect(0, 0, canvas.width, canvas.height);
+  if (hasCrashed()) resetGame();
+  if (paths.length === points + 2) paths.shift();
+  updatePath(direction);
+  drawSnake();
+  drawFood();
+};
+
+trackMovement();
+makeFood();
+window.setInterval(startGame, 100);
+
+// TODO:  Add button to stop game

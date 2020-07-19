@@ -1,11 +1,4 @@
 "use strict";
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
-};
 var _a;
 var Directions;
 (function (Directions) {
@@ -20,13 +13,13 @@ var DirectionUnits = (_a = {},
     _a[Directions.up] = -10,
     _a[Directions.down] = 10,
     _a);
+var scale = 10;
 var canvas = document.getElementById("canvas");
 var defaultX = canvas.width / 2;
 var defaultY = canvas.height / 2;
-var scale = 10;
-var ctx = canvas.getContext("2d");
-ctx.lineWidth = scale;
-var startPosition = [
+var defaultPoints = 1;
+var defaultDirection = Directions.right;
+var defaultPosition = [
     {
         isCurved: false,
         path: [defaultX, defaultY],
@@ -43,9 +36,12 @@ var startPosition = [
         direction: Directions.right,
     },
 ];
+var ctx = canvas.getContext("2d");
+ctx.lineWidth = scale;
 var foodCoordinates = [];
-var direction = Directions.right;
-var points = 1;
+var direction = defaultDirection;
+var points = defaultPoints;
+var paths = defaultPosition;
 var trackMovement = function () {
     // Setup events to track snake direction
     document.addEventListener("keydown", function (event) {
@@ -67,7 +63,7 @@ var trackMovement = function () {
         }
     });
 };
-var updatePath = function (paths, direction) {
+var updatePath = function (direction) {
     var isCurved = true;
     var path;
     var lastPath = paths[paths.length - 1];
@@ -90,8 +86,9 @@ var updatePath = function (paths, direction) {
         // Curves along the y axis
         path = [x, y + DirectionUnits[direction], x, y];
     }
+    // Check if food has been eaten
     if (path[0] === foodCoordinates[0] && path[1] === foodCoordinates[1]) {
-        makeNewFood();
+        makeFood();
         points++;
     }
     paths.push({
@@ -100,42 +97,50 @@ var updatePath = function (paths, direction) {
         path: path,
     });
 };
-var drawSnake = function (ctx, paths) {
-    ctx.beginPath();
-    paths.forEach(function (_a) {
-        var path = _a.path, isCurved = _a.isCurved;
-        if (isCurved) {
-            /* @ts-ignore */
-            ctx.quadraticCurveTo.apply(ctx, path);
-        }
-        /* @ts-ignore */
-        ctx.lineTo.apply(ctx, path);
-    });
-    ctx.stroke();
+var drawSnake = function () {
+    if (ctx) {
+        ctx.beginPath();
+        paths.forEach(function (_a) {
+            var path = _a.path, isCurved = _a.isCurved;
+            if (isCurved) {
+                // @ts-ignore
+                ctx.quadraticCurveTo.apply(ctx, path);
+            }
+            // @ts-ignore
+            ctx.lineTo.apply(ctx, path);
+        });
+        ctx.stroke();
+    }
 };
-var makeNewFood = function () {
+var drawFood = function () {
+    var x = foodCoordinates[0], y = foodCoordinates[1];
+    ctx.strokeRect(x, y, scale / 6, scale / 6);
+};
+var makeFood = function () {
     // TODO: Improve so that it always scales with adjusting height and width
     foodCoordinates[0] = Math.floor((canvas.height / 10) * Math.random()) * 10;
     foodCoordinates[1] = Math.floor((canvas.width / 10) * Math.random()) * 10;
 };
-var drawFood = function () {
-    // @ts-ignore;
-    ctx.strokeRect.apply(ctx, __spreadArrays(foodCoordinates, [scale / 6, scale / 6]));
+var hasCrashed = function () {
+    // TODO: Add logic
+    return false;
 };
-function startGame() {
-    var paths = startPosition;
-    trackMovement();
-    makeNewFood();
-    window.setInterval(function () {
-        /* @ts-ignore */
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (paths.length === points + 2) {
-            paths.shift();
-        }
-        updatePath(paths, direction);
-        /* @ts-ignore */
-        drawSnake(ctx, paths);
-        drawFood();
-    }, 100);
-}
-startGame();
+var resetGame = function () {
+    paths = defaultPosition;
+    points = defaultPoints;
+    direction = defaultDirection;
+};
+var startGame = function () {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (hasCrashed())
+        resetGame();
+    if (paths.length === points + 2)
+        paths.shift();
+    updatePath(direction);
+    drawSnake();
+    drawFood();
+};
+trackMovement();
+makeFood();
+window.setInterval(startGame, 100);
+// TODO:  Add button to stop game
