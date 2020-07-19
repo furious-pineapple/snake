@@ -1,0 +1,30 @@
+{
+  "name": "snake",
+  "version": "1.0.0",
+  "description": "Snake game built with JavaScript",
+  "main": "script.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/furious-pineapple/snake.git"
+  },
+  "keywords": [
+    "snake",
+    "javascript",
+    "game",
+    "canvas",
+    "html"
+  ],
+  "author": "Tolu Idowu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/furious-pineapple/snake/issues"
+  },
+  "homepage": "https://github.com/furious-pineapple/snake#readme",
+  "devDependencies": {
+    "typescript": "^3.9.7"
+  }
+}
