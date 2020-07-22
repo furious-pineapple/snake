@@ -1,4 +1,11 @@
 "use strict";
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 var _a;
 var Directions;
 (function (Directions) {
@@ -41,7 +48,7 @@ ctx.lineWidth = scale;
 var foodCoordinates = [];
 var direction = defaultDirection;
 var points = defaultPoints;
-var paths = defaultPosition;
+var paths = __spreadArrays(defaultPosition);
 var trackMovement = function () {
     // Setup events to track snake direction
     document.addEventListener("keydown", function (event) {
@@ -64,10 +71,10 @@ var trackMovement = function () {
     });
 };
 var updatePath = function (direction) {
-    var isCurved = true;
-    var path;
     var lastPath = paths[paths.length - 1];
     var _a = lastPath.path, x = _a[0], y = _a[1];
+    var isCurved = true;
+    var path;
     // Straight line
     if (lastPath.direction === direction) {
         isCurved = false;
@@ -87,9 +94,9 @@ var updatePath = function (direction) {
         path = [x, y + DirectionUnits[direction], x, y];
     }
     // Check if food has been eaten
-    if (path[0] === foodCoordinates[0] && path[1] === foodCoordinates[1]) {
+    if (path.join("") === foodCoordinates.join("")) {
+        updateScore();
         makeFood();
-        points++;
     }
     paths.push({
         isCurved: isCurved,
@@ -117,16 +124,39 @@ var drawFood = function () {
     ctx.strokeRect(x, y, scale / 6, scale / 6);
 };
 var makeFood = function () {
-    // TODO: Improve so that it always scales with adjusting height and width
     foodCoordinates[0] = Math.floor((canvas.height / 10) * Math.random()) * 10;
     foodCoordinates[1] = Math.floor((canvas.width / 10) * Math.random()) * 10;
 };
+var updateScore = function () {
+    points += 1;
+    var pointsTextNode = document.querySelector("#points");
+    if (pointsTextNode)
+        pointsTextNode.innerHTML = points + "00";
+};
 var hasCrashed = function () {
-    // TODO: Add logic
-    return false;
+    var currentPath = paths[paths.length - 1];
+    var hasCrashed = false;
+    // Check if path is outside border
+    if (currentPath.path[0] < 0 ||
+        currentPath.path[0] > canvas.width ||
+        currentPath.path[1] < 0 ||
+        currentPath.path[1] > canvas.height) {
+        hasCrashed = true;
+    }
+    if (!hasCrashed) {
+        paths.forEach(function (_a, index) {
+            var path = _a.path;
+            if (!hasCrashed && index !== paths.length - 1) {
+                if (path.join() === currentPath.path.join()) {
+                    hasCrashed = true;
+                }
+            }
+        });
+    }
+    return hasCrashed;
 };
 var resetGame = function () {
-    paths = defaultPosition;
+    paths = __spreadArrays(defaultPosition);
     points = defaultPoints;
     direction = defaultDirection;
 };

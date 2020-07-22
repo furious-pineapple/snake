@@ -50,9 +50,9 @@ ctx!.lineWidth = scale;
 const foodCoordinates: number[] = [];
 let direction = defaultDirection;
 let points = defaultPoints;
-let paths: snakePath[] = defaultPosition;
+let paths: snakePath[] = [...defaultPosition];
 
-const trackMovement = () => {
+const trackMovement = (): void => {
   // Setup events to track snake direction
   document.addEventListener("keydown", function (event) {
     switch (event.which) {
@@ -76,11 +76,11 @@ const trackMovement = () => {
   });
 };
 
-const updatePath = (direction: Directions) => {
-  let isCurved = true;
-  let path;
+const updatePath = (direction: Directions): void => {
   const lastPath = paths[paths.length - 1];
   const [x, y] = lastPath.path;
+  let isCurved = true;
+  let path;
   // Straight line
   if (lastPath.direction === direction) {
     isCurved = false;
@@ -97,9 +97,9 @@ const updatePath = (direction: Directions) => {
     path = [x, y + DirectionUnits[direction], x, y];
   }
   // Check if food has been eaten
-  if (path[0] === foodCoordinates[0] && path[1] === foodCoordinates[1]) {
+  if (path.join("") === foodCoordinates.join("")) {
+    updateScore();
     makeFood();
-    points++;
   }
   paths.push({
     isCurved,
@@ -108,7 +108,7 @@ const updatePath = (direction: Directions) => {
   });
 };
 
-const drawSnake = () => {
+const drawSnake = (): void => {
   if (ctx) {
     ctx.beginPath();
     paths.forEach(({ path, isCurved }) => {
@@ -123,24 +123,48 @@ const drawSnake = () => {
   }
 };
 
-const drawFood = () => {
+const drawFood = (): void => {
   const [x, y] = foodCoordinates;
   ctx!.strokeRect(x, y, scale / 6, scale / 6);
 };
 
-const makeFood = () => {
-  // TODO: Improve so that it always scales with adjusting height and width
+const makeFood = (): void => {
   foodCoordinates[0] = Math.floor((canvas.height / 10) * Math.random()) * 10;
   foodCoordinates[1] = Math.floor((canvas.width / 10) * Math.random()) * 10;
 };
 
-const hasCrashed = () => {
-  // TODO: Add logic
-  return false;
+const updateScore = () => {
+  points += 1;
+  const pointsTextNode = document.querySelector("#points");
+  if (pointsTextNode) pointsTextNode.innerHTML = `${points}00`;
+};
+
+const hasCrashed = (): boolean => {
+  const currentPath = paths[paths.length - 1];
+  let hasCrashed = false;
+  // Check if path is outside border
+  if (
+    currentPath.path[0] < 0 ||
+    currentPath.path[0] > canvas.width ||
+    currentPath.path[1] < 0 ||
+    currentPath.path[1] > canvas.height
+  ) {
+    hasCrashed = true;
+  }
+  if (!hasCrashed) {
+    paths.forEach(({ path }, index) => {
+      if (!hasCrashed && index !== paths.length - 1) {
+        if (path.join() === currentPath.path.join()) {
+          hasCrashed = true;
+        }
+      }
+    });
+  }
+  return hasCrashed;
 };
 
 const resetGame = () => {
-  paths = defaultPosition;
+  paths = [...defaultPosition];
   points = defaultPoints;
   direction = defaultDirection;
 };
